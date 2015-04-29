@@ -97,7 +97,13 @@ package body Check_DER_Decode is
       Test_Status : Status_Type;
    begin
       for I in Test_Cases'Range loop
-         Get_Length_Value(Test_Cases(I).Input.Data.all, Test_Cases(I).Input.Start, Test_Stop, Test_Length, Test_Status);
+         Get_Length_Value
+           (Test_Cases(I).Input.Data.all,
+            Test_Cases(I).Input.Start,
+            Test_Stop,
+            Test_Length,
+            Test_Status);
+
          Assert
            (Test_Stop   = Test_Cases(I).Expected.Stop   and
             Test_Length = Test_Cases(I).Expected.Length and
@@ -108,8 +114,55 @@ package body Check_DER_Decode is
 
 
    procedure Test_Get_Boolean(T : in out AUnit.Test_Cases.Test_Case'Class) is
+      type Input_Record is
+         record
+            Data  : Octet_Array_Access;
+            Start : Natural;
+         end record;
+      type Output_Record is
+         record
+            Stop   : Natural;
+            Value  : Boolean;
+            Status : Status_Type;
+         end record;
+
+      type Test_Case is
+         record
+            Input    : Input_Record;
+            Expected : Output_Record;
+         end record;
+
+      subtype Array_3_Type is Octet_Array(1 .. 3);
+
+      Test_Cases : array(1 .. 3) of Test_Case :=
+        -- Correctly formatted Boolean encodings.
+        ( 1 => (Input    => (Data => new Array_3_Type'(16#01#, 16#01#, 16#00#), Start => 1),
+                Expected => (Stop => 3, Value => False, Status => Success)),
+          2 => (Input    => (Data => new Array_3_Type'(16#01#, 16#01#, 16#FF#), Start => 1),
+                Expected => (Stop => 3, Value => True, Status => Success)),
+
+          -- Check an invalid encoding.
+          3 => (Input    => (Data => new Array_3_Type'(16#01#, 16#01#, 16#01#), Start => 1),
+                Expected => (Stop => 3, Value => False, Status => Bad_Value)));
+
+      Test_Stop   : Natural;
+      Test_Value  : Boolean;
+      Test_Status : Status_Type;
    begin
-      raise Program_Error;
+      for I in Test_Cases'Range loop
+         Get_Boolean_Value
+           (Test_Cases(I).Input.Data.all,
+            Test_Cases(I).Input.Start,
+            Test_Stop,
+            Test_Value,
+            Test_Status);
+
+         Assert
+           (Test_Value  = Test_Cases(I).Expected.Value  and
+            Test_Stop   = Test_Cases(I).Expected.Stop   and
+            Test_Status = Test_Cases(I).Expected.Status,
+            "Test case #" & Integer'Image(I) & " failed");
+      end loop;
    end Test_Get_Boolean;
 
 
@@ -186,7 +239,13 @@ package body Check_DER_Decode is
       Test_Status : Status_Type;
    begin
       for I in Test_Cases'Range loop
-         Get_Integer_Value(Test_Cases(I).Input.Data.all, Test_Cases(I).Input.Start, Test_Stop, Test_Value, Test_Status);
+         Get_Integer_Value
+           (Test_Cases(I).Input.Data.all,
+            Test_Cases(I).Input.Start,
+            Test_Stop,
+            Test_Value,
+            Test_Status);
+
          Assert
            (Test_Stop   = Test_Cases(I).Expected.Stop   and
             Test_Value  = Test_Cases(I).Expected.Value  and
